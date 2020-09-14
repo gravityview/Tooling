@@ -1,0 +1,72 @@
+version: '3.4'
+
+x-environment: &x-environment
+  MYSQL_HOST: mysql
+  MYSQL_ROOT_PASSWORD: wordpress
+  MYSQL_DATABASE: wordpress
+  MYSQL_USER: wordpress
+  MYSQL_PASSWORD: wordpress
+
+x-php: &x-php
+  depends_on:
+    - mysql
+  volumes:
+    - ${PLUGIN_DIR}:${PLUGIN_DIR}
+    - ${GF_PLUGIN_DIR}:/tmp/gravityforms
+    - ${PHPUNIT_DIR}:${PHPUNIT_DIR}
+    - ${WP_LATEST_TESTS_DIR}:/tmp/wordpress-develop
+  environment:
+    <<: *x-environment
+    WP_TESTS_DIR: /tmp/wordpress-develop/tests/phpunit
+  tty: true
+  stdin_open: true
+
+services:
+  php7.4:
+    <<: *x-php
+    image: gravityview/php:7.4
+
+  php7.3:
+    <<: *x-php
+    image: gravityview/php:7.3
+
+  php7.2:
+    <<: *x-php
+    image: gravityview/php:7.2
+
+  php7.1:
+    <<: *x-php
+    image: gravityview/php:7.1
+
+  php7.0:
+    <<: *x-php
+    image: gravityview/php:7.0
+
+  php5.6:
+    <<: *x-php
+    image: gravityview/php:5.6
+
+  php5.5:
+    <<: *x-php
+    image: gravityview/php:5.5
+    volumes:
+      - ${PLUGIN_DIR}:${PLUGIN_DIR}
+      - ${GF_PLUGIN_DIR}:/tmp/gravityforms
+      - ${PHPUNIT_DIR}:${PHPUNIT_DIR}
+      - ${WP_51_TESTS_DIR}:/tmp/wordpress-develop
+
+  php5.4:
+    <<: *x-php
+    image: gravityview/php:5.4
+    volumes:
+      - ${PLUGIN_DIR}:${PLUGIN_DIR}
+      - ${GF_PLUGIN_DIR}:/tmp/gravityforms
+      - ${PHPUNIT_DIR}:${PHPUNIT_DIR}
+      - ${WP_51_TESTS_DIR}:/tmp/wordpress-develop
+
+  mysql:
+    image: circleci/mysql:5.7-ram
+    environment:
+     <<: *x-environment
+    volumes:
+      - /dev/shm:/dev/shm
