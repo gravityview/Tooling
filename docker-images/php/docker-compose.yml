@@ -1,0 +1,50 @@
+version: '3.4'
+
+services:
+  php7.4:
+    build:
+      context: .
+      args:
+        image: alterway/php:7.4-cli
+
+  php7.3:
+    build:
+      context: .
+      args:
+        image: alterway/php:7.3-cli
+
+  php7.2:
+    build:
+      context: .
+      args:
+        image: alterway/php:7.2-cli
+
+  php7.1:
+    build:
+      context: .
+      args:
+        image: alterway/php:7.1-cli
+
+  php7.0:
+    build:
+      context: .
+      args:
+        image: alterway/php:7.0-cli
+
+  php5.6:
+    build:
+      context: .
+      args:
+        image: alterway/php:5.6-cli
+
+  php5.5:
+    build:
+      context: .
+      args:
+        image: alterway/php:5.5-cli
+
+  php5.4:
+    build:
+      context: .
+      args:
+        image: alterway/php:5.4-cli
