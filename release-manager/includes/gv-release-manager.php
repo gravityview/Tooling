@@ -83,7 +83,7 @@ class Release_Manager extends \WP_List_Table {
 		add_submenu_page(
 			'edit.php?post_type=download',
 			'GravityView Release Manager',
-			'GV Releases',
+			'Manage Releases',
 			$capability,
 			'gv_release_manager',
 			[ $this, 'admin_menu_init' ]
