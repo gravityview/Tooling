@@ -188,7 +188,7 @@ HTML;
 
 		switch ( $column ) {
 			case 'plugin_name':
-				return sprintf( '<a href="https://github.com/gravityview/%s">%s</a>', explode( '/commit', basename( $row[ $column ] ) )[0], $row[ $column ] );
+				return sprintf( '<a href="https://github.com/gravityview/%s">%s</a>', trim( explode( '/commit', basename( $row[ $column ] ) )[0] ), $row[ $column ] );
 			case 'gh_commit_timestamp':
 				return date_i18n( 'F j, Y @ H:i:s', $row[ $column ] );
 			case 'gh_commit_url':
