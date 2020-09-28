@@ -26,7 +26,7 @@ class Release_Manager extends \WP_List_Table {
 
 	const DEFAULT_ORDER_BY = 'gh_commit_timestamp';
 
-	const DEFAULT_ORDER = 'asc';
+	const DEFAULT_ORDER = 'desc';
 
 	const DEFAULT_PER_PAGE = 20;
 
