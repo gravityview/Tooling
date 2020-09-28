@@ -78,7 +78,7 @@ class Release_Manager extends \WP_List_Table {
 		 * @filter `gv_release_manager/access/capability` Set custom capability for admin menu access
 		 * @since 1.0.0
 		 */
-		$capability = apply_filters( 'gv_release_manager/access/capability', 'activate_plugins' );
+		$capability = apply_filters( 'gv_release_manager/access/capability', 'edit_products' );
 
 		add_submenu_page(
 			'edit.php?post_type=download',
