@@ -80,7 +80,8 @@ class Release_Manager extends \WP_List_Table {
 		 */
 		$capability = apply_filters( 'gv_release_manager/access/capability', 'activate_plugins' );
 
-		add_menu_page(
+		add_submenu_page(
+			'edit.php?post_type=download',
 			'GravityView Release Manager',
 			'GV Releases',
 			$capability,
