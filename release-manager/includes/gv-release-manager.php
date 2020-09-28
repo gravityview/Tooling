@@ -369,7 +369,7 @@ HTML;
 
 		$screen = get_current_screen();
 
-		if ( 'toplevel_page_gv_release_manager' !== $screen->id ) {
+		if ( 'download_page_gv_release_manager' !== $screen->id ) {
 			return;
 		}
 
