@@ -76,7 +76,7 @@ class Release_Manager extends \WP_List_Table {
 
 		/**
 		 * @filter `gv_release_manager/access/capability` Set custom capability for admin menu access
-		 * @since 1.0.0
+		 * @since  1.0.0
 		 */
 		$capability = apply_filters( 'gv_release_manager/access/capability', 'edit_products' );
 
@@ -187,9 +187,12 @@ HTML;
 	protected function column_default( $row, $column ) {
 
 		switch ( $column ) {
+			case 'plugin_name':
+				return sprintf( '<a href="%s">%s</a>', explode( '/commit', basename( $row[ $column ] ) )[0], $row[ $column ] );
 			case 'gh_commit_timestamp':
-				return date_i18n( get_option( 'date_format' ), $row[ $column ] );
+				return date_i18n( 'F j, Y @ H:i:s', $row[ $column ] );
 			case 'gh_commit_url':
+				return sprintf( '<a href="%s">%s</a>', $row[ $column ], basename( $row[ $column ] ) );
 			case 'ci_job_url':
 			case 'download_url':
 				return sprintf( '<a href="%s">Link</a>', $row[ $column ] );
