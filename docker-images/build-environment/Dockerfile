@@ -22,3 +22,8 @@ RUN npm install -g grunt-cli bower
 RUN pip3 install transifex-client
 
 WORKDIR /app
+
+ADD run.sh /
+
+ENTRYPOINT ["/bin/bash", "-c", "/run.sh \"$@\"", "--"]
+
