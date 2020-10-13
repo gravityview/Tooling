@@ -281,7 +281,7 @@ END
     git commit -m "Add updated translations/assets & release $RELEASE_TAG [ci skip]"
 
     # Maybe update develop branch
-    if [[ $(git show-ref --verify refs/heads/develop) ]] && [[ $GH_CURRENT_BRANCH != 'develop' ]]; then
+    if [[ $(git branch -a | grep remotes/origin/develop) ]] && [[ $GH_CURRENT_BRANCH != 'develop' ]]; then
       REMOTE_BRANCHES_TO_UPDATE+=" develop"
 
       git checkout develop
