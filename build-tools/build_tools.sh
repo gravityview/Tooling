@@ -153,8 +153,6 @@ END
   ! [ -s ${args[1]} ] && _abort "ERROR: $BUILD_FILE is empty"
 
   echo "SUCCESS: $BUILD_FILE was created"
-
-  eval "$2='$BUILD_FILE'"
 }
 
 announce_build() {
