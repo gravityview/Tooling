@@ -11,7 +11,7 @@
  * @copyright Copyright 2020, Katz Web Services, Inc.
  *
  * @global jQuery
-  */
+ */
 
 ( function( $ ) {
 
@@ -117,6 +117,12 @@
 		},
 	};
 
-	release_list.init();
+	$( '#storage_path, #auth_token' ).after( ' (<a href="#" class="generate_random_value">random</a>)' );
+	$( '.generate_random_value' ).on( 'click', function() {
+		var randomValue = Array( 25 ).fill( 0 ).map( x => Math.random().toString( 36 ).charAt( 2 ) ).join( '' );
 
+		$( this ).prevAll( 'input' ).val( randomValue );
+	} );
+
+	release_list.init();
 } )( jQuery );

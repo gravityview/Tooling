@@ -71,6 +71,6 @@ class REST_Controller extends \WP_REST_Controller {
 	 */
 	public function check_authorization( $request ) {
 
-		return $this->release_manager->get_auth_token() === $request->get_header( 'Authorization' );
+		return $this->release_manager->get_setting( 'auth_token') === $request->get_header( 'Authorization' );
 	}
 }

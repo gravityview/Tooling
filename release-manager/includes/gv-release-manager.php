@@ -32,9 +32,11 @@ class Release_Manager extends \WP_List_Table {
 
 	const NONCE_ACTION = 'gv_release_manager_nonce';
 
-	const TRANSIENT_AUTH_TOKEN = 'gv_release_manager_auth_token';
+	const OPTION_SETTINGS = 'gv_release_manager_settings';
 
-	const TRANSIENT_RELEASES = 'gv_release_manager_releases';
+	const OPTION_RELEASES = 'gv_release_manager_releases';
+
+	private $settings;
 
 	/**
 	 * @inheritDoc
@@ -118,7 +120,9 @@ class Release_Manager extends \WP_List_Table {
 
 		$title           = esc_html( get_admin_page_title() );
 		$nonce_field     = wp_nonce_field( self::NONCE_ACTION );
-		$auth_token      = $this->get_auth_token();
+		$auth_token      = $this->get_setting( 'auth_token' );
+		$storage_path    = $this->get_setting( 'storage_path' );
+		$wp_upload_path  = wp_upload_dir()['basedir'];
 		$_GET['orderby'] = ! empty( $_GET['orderby'] ) ? $_GET['orderby'] : self::DEFAULT_ORDER_BY;
 
 		ob_start();
@@ -130,33 +134,42 @@ class Release_Manager extends \WP_List_Table {
 
 		echo <<<HTML
 <div class="wrap">
-   <h1>${title}</h1>
+	<h1>${title}</h1>
 
-<form method="post">
-	<input type="hidden" name="action" value="save_auth_token">
-	${nonce_field}
+	<form method="post">
+		<input type="hidden" name="action" value="gv_release_manage_save_settings">
+		${nonce_field}
 
-   <table class="form-table" role="presentation">
-      <tbody>
-         <tr class="form-field">
-            <th style="width: 10em;" scope="row">
-            	<label for="auth_token">Authorization Token:</label>
-            </th>
-            <td>
-            	<input type="text" name="auth_token" id="auth_token" value="${auth_token}" style="width: 20em;">
-            	<p class="submit">
-            		<input type="submit" id="save_auth_token" class="button button-primary" value="Save Token">
-            	</p>
-            </td>
-         </tr>
-      </tbody>
-   </table>
+		<table class="form-table" role="presentation">
+			<tbody>
+				<tr class="form-field">
+					<th style="width: 10em;" scope="row">
+						<label for="auth_token">Authorization Token:</label>
+					</th>
+					<td>
+						<input type="text" name="auth_token" id="auth_token" value="${auth_token}" style="width: 20em;">
+					</td>
+				</tr>
+				<tr class="form-field">
+					<th style="width: 10em;" scope="row">
+						<label for="auth_token">Storage Path:</label>
+					</th>
+					<td>
+						<i>${wp_upload_path}</i>/<input type="text" name="storage_path" id="storage_path" value="${storage_path}" style="width: 20em;">
+						<p class="submit">
+							<input type="submit" id="save_settings" class="button button-primary" value="Save Settings">
+						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</form>
 
-  </form>
-   <hr />
-   <form id="gv-releases" method="get">
-      ${releases}
-   </form>
+	<hr />
+
+	<form id="gv-releases" method="get">
+		${releases}
+	</form>
 </div>
 HTML;
 	}
@@ -174,7 +187,7 @@ HTML;
 			'gh_commit_tag'       => 'GH Tag',
 			'gh_commit_timestamp' => 'GH Commit Date',
 			'gh_commit_url'       => 'GH Commit Hash',
-			'download_url'        => 'Release Download',
+			'build_file'          => 'Release Download',
 			'ci_job_url'          => 'CI Job',
 		];
 	}
@@ -194,8 +207,15 @@ HTML;
 			case 'gh_commit_url':
 				return sprintf( '<a href="%s">%s</a>', $row[ $column ], basename( $row[ $column ] ) );
 			case 'ci_job_url':
-			case 'download_url':
-				return sprintf( '<a href="%s">Link</a>', $row[ $column ] );
+				return ! empty( $row[ $column ] ) ? sprintf( '<a href="%s">Link</a>', $row[ $column ] ) : 'N/A';
+			case 'build_file':
+				$build_file = ! empty( $row[ $column ] ) ? $row[ $column ] : '';
+
+				$build_file_with_path = sprintf( '%s/%s', $this->get_setting( 'storage_path' ), $build_file );
+
+				return is_file( sprintf( '%s/%s', wp_upload_dir()['basedir'], $build_file_with_path ) )
+					? sprintf( '<a href="%s/%s">Link</a>', wp_upload_dir()['baseurl'], $build_file_with_path )
+					: 'N/A';
 			default:
 				return ! empty( $row[ $column ] ) ? $row[ $column ] : 'N/A';
 		}
@@ -389,39 +409,108 @@ HTML;
 	 */
 	public function maybe_save_settings() {
 
-		if ( empty( $_POST ) || ! isset( $_POST['action'] ) || ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], self::NONCE_ACTION ) ) {
+		if ( empty( $_POST ) || ! isset( $_POST['action'] ) || 'gv_release_manage_save_settings' !== $_POST['action'] || ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], self::NONCE_ACTION ) ) {
 			return;
 		}
 
-		if ( 'save_auth_token' === $_POST['action'] && isset( $_POST['auth_token'] ) ) {
-			$this->save_auth_token( sanitize_text_field( $_POST['auth_token'] ) );
+		$settings = $this->get_settings();
+
+		$new_settings = array_map( 'esc_attr', $_POST );
+
+		// Save token
+		if ( ! empty( $new_settings['auth_token'] ) ) {
+			$settings['auth_token'] = $new_settings['auth_token'];
 		}
+
+		// Save storage path
+		if ( ! empty( $new_settings['storage_path'] ) ) {
+			$new_storage_path = sprintf( '%s/%s', wp_upload_dir()['basedir'], $new_settings['storage_path'] );
+
+			if ( ! empty( $settings['storage_path'] ) && $settings['storage_path'] !== $new_settings['storage_path'] ) {
+				$storage_path = sprintf( '%s/%s', wp_upload_dir()['basedir'], $settings['storage_path'] );
+
+				# Rename storage path if it exists
+				if ( is_dir( $storage_path ) ) {
+					rename( $storage_path, $new_storage_path );
+				}
+			} elseif ( ! is_dir( $new_storage_path ) ) {
+				mkdir( $new_storage_path );
+			}
+
+			$settings['storage_path'] = $new_settings['storage_path'];
+		}
+
+		$this->save_settings( $settings );
 	}
 
 	/**
-	 * Save authorization token
+	 * Get all plugin settings
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param mixed $token Authorization token
+	 * @param array $release_data Release data
 	 *
-	 * @return boolean
+	 * @return array Settings
 	 */
-	private function save_auth_token( $token ) {
+	public function get_settings() {
 
-		return set_transient( self::TRANSIENT_AUTH_TOKEN, $token );
+		if ( ! $this->settings ) {
+			$settings = get_option( self::OPTION_SETTINGS );
+
+			$this->settings = $settings ? $settings : [];
+		}
+
+		return $this->settings;
 	}
 
 	/**
-	 * Get authorization token
+	 * Get single plugin setting
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return mixed Authorization token
+	 * @param string $setting Setting
+	 *
+	 * @return string Setting value or empty string
 	 */
-	public function get_auth_token() {
+	public function get_setting( $setting ) {
 
-		return get_transient( self::TRANSIENT_AUTH_TOKEN );
+		$settings = $this->get_settings();
+
+		return isset( $settings[ $setting ] ) ? $settings[ $setting ] : '';
+	}
+
+	/**
+	 * Save all plugin settings
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $settings Setting
+	 *
+	 * @return void
+	 */
+	public function save_settings( $settings = [] ) {
+
+		update_option( self::OPTION_SETTINGS, $settings );
+
+		$this->settings = $settings;
+	}
+
+	/**
+	 * Save single plugin setting
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $setting Setting
+	 *
+	 * @return void
+	 */
+	public function save_setting( $setting = [] ) {
+
+		$settings = $this->get_settings();
+
+		$settings = array_merge( $settings, $setting );
+
+		$this->save_settings( $settings );
 	}
 
 	/**
@@ -433,7 +522,7 @@ HTML;
 	 */
 	public function get_releases() {
 
-		$releases = get_transient( self::TRANSIENT_RELEASES );
+		$releases = get_option( self::OPTION_RELEASES );
 
 		return $releases ? $releases : [];
 	}
@@ -443,25 +532,93 @@ HTML;
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $release Release data
+	 * @param array $release_data Release data
 	 *
 	 * @return true|\WP_Error
 	 */
-	public function add_new_release( $release = [] ) {
+	public function add_new_release( $release_data = [] ) {
 
-		$release = array_map( 'esc_attr', $release );
+		$required_properties = [
+			'plugin_name',
+			'plugin_version',
+			'gh_commit_tag',
+			'gh_commit_timestamp',
+			'gh_commit_url',
+			'ci_job_url',
+			'build_hash',
+		];
 
-		foreach ( array_keys( $this->get_columns() ) as $column ) {
-			if ( ! isset( $release[ $column ] ) ) {
-				return new \WP_Error( 'missing_data', "'${column}' property is missing." );
+		$release_data = array_map( 'esc_attr', $release_data );
+
+		foreach ( $required_properties as $property ) {
+			if ( ! isset( $release_data[ $property ] ) ) {
+				return new \WP_Error( 'missing_data', "'${property}' property is missing." );
 			}
 		}
 
-		$releases   = self::get_releases();
-		$releases[] = $release;
+		try {
+			$release_data['build_file'] = $this->process_build_upload( $release_data );
+		} catch ( \Exception $e ) {
+			return new \WP_Error( 'upload_fail', "Build file upload failed: {$e->getMessage()}" );
+		}
 
-		$result = set_transient( self::TRANSIENT_RELEASES, $releases );
+		$release_data['_id'] = wp_generate_password(5); // set unique ID in order to overwrite the option (WP's update_option otherwise rejects duplicate)
+
+		$id = substr( md5( sprintf( '%s-%s-%s', $release_data['plugin_name'], $release_data['plugin_version'], $release_data['gh_commit_tag'] )), 0, 5 );
+
+		$releases        = self::get_releases();
+		$releases[ $id ] = $release_data;
+
+		$result = update_option( self::OPTION_RELEASES, $releases );
 
 		return $result ? $result : new \WP_Error( 'save_error', 'Failed to save the release.' );
+	}
+
+	/**
+	 * Process uploaded build file
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $release_data Release data
+	 *
+	 * @return string Build filename
+	 *
+	 * @throws \Exception
+	 */
+	private function process_build_upload( $release_data = [] ) {
+
+		$build_file      = ! empty( $_FILES['build_file']['tmp_name'] ) ? $_FILES['build_file']['tmp_name'] : null;
+		$build_file_name = ! empty( $_FILES['build_file']['name'] ) ? $_FILES['build_file']['name'] : null;
+		$build_hash      = ! empty( $release_data['build_hash'] ) ? $release_data['build_hash'] : null;
+
+		$settings = $this->get_settings();
+
+		if ( ! $build_file || ! $build_hash || md5_file( $build_file ) !== $build_hash ) {
+
+			throw new \Exception( 'build does not exist or failed hash validation' );
+		}
+
+		$_save_storage_path = false;
+		if ( empty( $settings['storage_path'] ) ) {
+
+			$settings['storage_path'] = wp_generate_password( 25, false );
+			$_save_storage_path       = true;
+		}
+
+		$upload_folder = sprintf( '%s/%s', wp_upload_dir()['basedir'], $settings['storage_path'] );
+
+		if ( ! is_dir( $upload_folder ) && ! mkdir( $upload_folder ) ) {
+			throw new \Exception( "could not create an upload folder {$upload_folder}" );
+		}
+
+		if ( ! move_uploaded_file( $build_file, sprintf( '%s/%s', $upload_folder, $build_file_name ) ) ) {
+			throw new \Exception( "could save build file in {$upload_folder}" );
+		}
+
+		if ( $_save_storage_path ) {
+			$this->save_setting( [ 'storage_path' => $settings['storage_path'] ] );
+		}
+
+		return $build_file_name;
 	}
 }
