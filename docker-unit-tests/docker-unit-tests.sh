@@ -3,15 +3,17 @@
 # read environment variables from .env file if it exists
 [ -f '.env' ] && source <(grep -v '^#' .env | sed -E 's|^(.+)=(.*)$|: ${\1=\2}; export \1|g')
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PLUGIN_DIR=${PLUGIN_DIR:-./}
 GF_PLUGIN_DIR=${GF_PLUGIN_DIR:-./gravityforms}
 WP_51_TESTS_DIR=${WP_51_TESTS_DIR:-./wordpress-51-tests-lib}
 WP_LATEST_TESTS_DIR=${WP_LATEST_TESTS_DIR:-./wordpress-latest-tests-lib}
 PHPUNIT_DIR=${PHPUNIT_DIR:-./phpunit}
 GH_AUTH_TOKEN=${GH_AUTH_TOKEN:-}
-DEPENDENCIES=(unzip wget jq docker-compose)
 PHP_VERSIONS=(5.4 5.5 5.6 7.0 7.1 7.2 7.3 7.4)
 FORCE_DOWNLOAD=false
+
+DEPENDENCIES=(unzip wget jq docker-compose)
 
 (cat <<-END
 
@@ -28,6 +30,7 @@ FORCE_DOWNLOAD=false
 END
 )
 
+######################### Helpers
 _abort() {
 	local _ret="${2:-1}"
 	echo "$1" >&2
@@ -63,10 +66,11 @@ _run_docker_compose() {
      PHPUNIT_DIR=$PHPUNIT_DIR \
      WP_51_TESTS_DIR=$WP_51_TESTS_DIR \
      WP_LATEST_TESTS_DIR=$WP_LATEST_TESTS_DIR ;\
-   docker-compose run --rm $1 -c $PHPUNIT_CONFIG $2\
+   docker-compose -f $SCRIPT_DIR/docker-compose.yml run --rm $1 -c $PHPUNIT_CONFIG $2\
   ) || _abort "Docker exited with an error"
 }
 
+######################### Available commands
 configure_test_suits() {
   if [ ! -f $WP_51_TESTS_DIR/wp-tests-config-sample.php ] || [ ! -f $WP_LATEST_TESTS_DIR/wp-tests-config-sample.php ]; then
     _abort "Run \"download_test_suits\" before configuring them"
@@ -236,6 +240,7 @@ test_all() {
   test_74 "$1"
 }
 
+######################### Runtime magic :)
 set -e
 
 if [ -z "$1" ]; then
@@ -270,7 +275,7 @@ The following environment variables are used:
     WP_LATEST_TESTS_DIR              Latest WP test suit location (default: ./wordpress-latest-tests-lib)
     PHPUNIT_DIR                      PHPUnit executables location (default: ./phpunit)
     GF_PLUGIN_DIR                    Gravity Forms location (default: ./gravityforms)
-    PLUGIN_DIR                    GravityView location (default: ./gravityview)
+    PLUGIN_DIR                       Location of the plugin that's being tested (default: ./)
     GH_AUTH_TOKEN                    GitHub auth token (required to download Gravity Forms)
 
 Examples:
