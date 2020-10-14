@@ -79,12 +79,20 @@ php() {
   _run_docker php "$@"
 }
 
+composer() {
+  _run_docker composer "$@"
+}
+
 grunt() {
   _run_docker grunt "$@"
 }
 
 npm() {
   _run_docker npm "$@"
+}
+
+yarn() {
+  _run_docker yarn "$@"
 }
 
 tx() {
@@ -94,7 +102,6 @@ tx() {
 gh() {
   _run_docker gh "$@"
 }
-
 
 plugin_version() {
   HELP=$(cat <<-END
@@ -320,8 +327,10 @@ ${BANNER}
 
 Available commands:
     php                                 Run PHP
+    composer                            Run Composer
     grunt                               Run Grunt
     npm                                 Run npm
+    yarn                                Run Yarn
     tx                                  Run Transifex client
     gh                                  Run GitHub CLI
     plugin_name                         Return plugin name
