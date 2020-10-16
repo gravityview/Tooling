@@ -60,13 +60,15 @@ _run_docker_compose() {
     _abort "\"$PHPUNIT_CONFIG\" is not found"
   fi
 
+  ENV="-v $(grep -v '^#' .env | awk '{print}' ORS=' -e ')"
+
   (export \
      PLUGIN_DIR=$PLUGIN_DIR \
      GF_PLUGIN_DIR=$GF_PLUGIN_DIR \
      PHPUNIT_DIR=$PHPUNIT_DIR \
      WP_51_TESTS_DIR=$WP_51_TESTS_DIR \
      WP_LATEST_TESTS_DIR=$WP_LATEST_TESTS_DIR ;\
-   docker-compose -f $SCRIPT_DIR/docker-compose.yml run --rm $1 -c $PHPUNIT_CONFIG $2\
+   docker-compose -f $SCRIPT_DIR/docker-compose.yml run $ENV --rm $1 -c $PHPUNIT_CONFIG $2\
   ) || _abort "Docker exited with an error"
 }
 
