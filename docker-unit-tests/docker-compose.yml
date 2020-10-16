@@ -11,6 +11,7 @@ x-php: &x-php
   depends_on:
     - mysql
   volumes:
+    - ${HOME}:${HOME}
     - ${PLUGIN_DIR}:${PLUGIN_DIR}
     - ${GF_PLUGIN_DIR}:/tmp/gravityforms
     - ${PHPUNIT_DIR}:${PHPUNIT_DIR}
@@ -50,6 +51,7 @@ services:
     <<: *x-php
     image: gravityview/php:5.5
     volumes:
+      - ${HOME}:${HOME}
       - ${PLUGIN_DIR}:${PLUGIN_DIR}
       - ${GF_PLUGIN_DIR}:/tmp/gravityforms
       - ${PHPUNIT_DIR}:${PHPUNIT_DIR}
@@ -59,6 +61,7 @@ services:
     <<: *x-php
     image: gravityview/php:5.4
     volumes:
+      - ${HOME}:${HOME}
       - ${PLUGIN_DIR}:${PLUGIN_DIR}
       - ${GF_PLUGIN_DIR}:/tmp/gravityforms
       - ${PHPUNIT_DIR}:${PHPUNIT_DIR}
