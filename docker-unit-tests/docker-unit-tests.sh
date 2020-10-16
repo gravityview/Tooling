@@ -61,7 +61,7 @@ _run_docker_compose() {
     _abort "\"$PHPUNIT_CONFIG\" is not found"
   fi
 
-  ENV="-v $(grep -v '^#' .env | awk '{print}' ORS=' -e ')"
+  ENV="-e $(grep -v '^#' .env | awk '{print}' ORS=' -e ')"
 
   (export \
      PLUGIN_DIR=$PLUGIN_DIR \
