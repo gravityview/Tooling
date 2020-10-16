@@ -6,6 +6,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PLUGIN_DIR=${PLUGIN_DIR:-./}
 GF_PLUGIN_DIR=${GF_PLUGIN_DIR:-./gravityforms}
+GV_PLUGIN_DIR=${GV_PLUGIN_DIR:-./gravityview}
 WP_51_TESTS_DIR=${WP_51_TESTS_DIR:-./wordpress-51-tests-lib}
 WP_LATEST_TESTS_DIR=${WP_LATEST_TESTS_DIR:-./wordpress-latest-tests-lib}
 PHPUNIT_DIR=${PHPUNIT_DIR:-./phpunit}
@@ -13,7 +14,7 @@ GH_AUTH_TOKEN=${GH_AUTH_TOKEN:-}
 PHP_VERSIONS=(5.4 5.5 5.6 7.0 7.1 7.2 7.3 7.4)
 FORCE_DOWNLOAD=false
 
-DEPENDENCIES=(unzip wget jq docker-compose)
+DEPENDENCIES=(git unzip wget jq docker-compose)
 
 (cat <<-END
 
@@ -162,6 +163,39 @@ download_phpunit() {
 	echo "SUCCESS: PHPUnit downloaded"
 }
 
+download_gravityview() {
+  if [ -z "${GH_AUTH_TOKEN}" ]; then
+    _abort '"GH_AUTH_TOKEN" environment variable must be set to continue'
+  fi
+
+  local GV_LATEST_HASH=$(wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/gravityview/gravityview/tags | jq '.[0].commit.sha' | tr -d '"')
+
+  if [ -f $GV_PLUGIN_DIR/.cache_hash ] && [ "$GV_LATEST_HASH" == "$(head -n 1 $GV_PLUGIN_DIR/.cache_hash )" ] && [ "$FORCE_DOWNLOAD" != true ]; then
+    echo "Latest GravityView has already been downloaded; skipping..."
+
+    return
+  fi
+
+  [ -d $GV_PLUGIN_DIR ] && rm -rf $GV_PLUGIN_DIR
+
+  mkdir -p $GV_PLUGIN_DIR
+
+  if [[ $1 == 'clone' ]]; then
+    echo "Cloning GravityView repo..."
+    git clone https://github.com/gravityview/GravityView.git $GV_PLUGIN_DIR
+  else
+    wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/gravityview/gravityview/tags |\
+      jq ".[0].tarball_url" |\
+      tr -d '"' |\
+      xargs -n1 wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q |\
+      tar --strip-components=1 -zx -C $GV_PLUGIN_DIR
+  fi
+
+  echo $GV_LATEST_HASH > $GV_PLUGIN_DIR/.cache_hash
+
+	[[ $1 == 'clone' ]] && echo "SUCCESS: GravityView repo cloned" || echo "SUCCESS: GravityView downloaded"
+}
+
 download_gravity_forms() {
   if [ -z "${GH_AUTH_TOKEN}" ]; then
     _abort '"GH_AUTH_TOKEN" environment variable must be set to continue'
@@ -250,6 +284,7 @@ if [ -z "$1" ]; then
 To prepare a test environment:
     download_phpunit                 Download PHPUnit 4-7
     download_gravity_forms           Download latest Gravity Forms
+    download_gravityview             Download latest GravityView (use "-o clone" to clone the repo instead of download latest release)
     download_test_suits              Download WordPress Develop 5.1 and latest version
     configure_test_suits             Update WP test config files
 
