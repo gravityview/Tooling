@@ -57,7 +57,7 @@ _run_docker() {
 _get_plugin_version() {
   [ -z "$1" ] || ! [ -s "$1" ] && _abort "ERROR: $1 plugin file not found"
 
-  PLUGIN_VERSION=$(cat $1 | grep -m1 -Po '(?<=Version:).*' | tr -d "  ")
+  PLUGIN_VERSION=$(cat $1 | grep -m1 -Po '(?<=Version:).*' | tr -d "  " | sed -e 's/^[[:space:]]*//')
 
   [ -z "$PLUGIN_VERSION" ] && _abort "ERROR: plugin version could not be found inside $PWD/$1"
 
