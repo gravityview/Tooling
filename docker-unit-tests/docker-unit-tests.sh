@@ -102,8 +102,8 @@ configure_test_suits() {
 }
 
 download_test_suits() {
-  local WP_51_HASH=$(wget -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags | jq 'map( select( .name | startswith( "5.1" ) ) ) | first | .commit.sha' | tr -d '"')
-  local WP_LATEST_HASH=$(wget -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags | jq '.[0].commit.sha' | tr -d '"')
+  local WP_51_HASH=$(wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags | jq 'map( select( .name | startswith( "5.1" ) ) ) | first | .commit.sha' | tr -d '"')
+  local WP_LATEST_HASH=$(wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags | jq '.[0].commit.sha' | tr -d '"')
 
   if [ -f $WP_51_TESTS_DIR/.cache_hash ] && [ "$WP_51_HASH" == "$(head -n 1 $WP_51_TESTS_DIR/.cache_hash )" ] && [ "$FORCE_DOWNLOAD" != true ]; then
     echo "WP 5.1 test suite has not changed; skipping..."
@@ -114,7 +114,7 @@ download_test_suits() {
 
     echo "Downloading WP 5.1 test suite..."
 
-   	wget -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags |\
+    wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags |\
 		  jq 'map( select( .name | startswith( "5.1" ) ) ) | first | .tarball_url' |\
 		  tr -d '"' |\
 		  xargs -n1 wget -O - -q |\
@@ -132,7 +132,7 @@ download_test_suits() {
 
     echo "Downloading latest WP test suite..."
 
-  	wget -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags |\
+    wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags |\
 	    jq '.[0].tarball_url' |\
 	    tr -d '"' |\
 	    xargs -n1 wget -O - -q |\
