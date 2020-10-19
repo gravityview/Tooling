@@ -49,7 +49,7 @@ _do_preflight_check() {
 
 _run_docker_compose() {
   if [ ! -f $WP_51_TESTS_DIR/wp-tests-config.php ] || [ ! -f $WP_LATEST_TESTS_DIR/wp-tests-config.php ]; then
-    _abort "Run \"configure_test_suits\" before running tests"
+    _abort "Run \"configure_test_suites\" before running tests"
   fi
 
   local PHPUNIT_CONFIG="$PLUGIN_DIR/phpunit.xml"
@@ -74,9 +74,9 @@ _run_docker_compose() {
 }
 
 ######################### Available commands
-configure_test_suits() {
+configure_test_suites() {
   if [ ! -f $WP_51_TESTS_DIR/wp-tests-config-sample.php ] || [ ! -f $WP_LATEST_TESTS_DIR/wp-tests-config-sample.php ]; then
-    _abort "Run \"download_test_suits\" before configuring them"
+    _abort "Run \"download_test_suites\" before configuring them"
   fi
 
  	# portable in-place argument for both GNU sed and Mac OSX sed (taken from WP's script)
@@ -86,9 +86,9 @@ configure_test_suits() {
 		local ioption='-i'
 	fi
 
-  TEST_SUITS=($WP_51_TESTS_DIR $WP_LATEST_TESTS_DIR)
+  TEST_SUITES=($WP_51_TESTS_DIR $WP_LATEST_TESTS_DIR)
 
-  for test_suites in ${TEST_SUITS[*]}
+  for test_suites in ${TEST_SUITES[*]}
   do
     cp $test_suites/wp-tests-config-sample.php $test_suites/wp-tests-config.php
 
@@ -98,10 +98,10 @@ configure_test_suits() {
 	  sed $ioption "s/'localhost'/getenv('MYSQL_HOST')/" "$test_suites"/wp-tests-config.php
   done
 
-	echo "SUCCESS: test suits configured"
+	echo "SUCCESS: test suites configured"
 }
 
-download_test_suits() {
+download_test_suites() {
   local WP_51_HASH=$(wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags | jq 'map( select( .name | startswith( "5.1" ) ) ) | first | .commit.sha' | tr -d '"')
   local WP_LATEST_HASH=$(wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags | jq '.[0].commit.sha' | tr -d '"')
 
@@ -141,7 +141,7 @@ download_test_suits() {
 	  echo $WP_LATEST_HASH > $WP_LATEST_TESTS_DIR/.cache_hash
   fi
 
-	echo "SUCCESS: test suits downloaded"
+	echo "SUCCESS: test suites downloaded"
 }
 
 download_phpunit() {
@@ -229,8 +229,8 @@ download_gravity_forms() {
 prepare_all() {
   download_phpunit
   download_gravity_forms
-  download_test_suits
-  configure_test_suits
+  download_test_suites
+  configure_test_suites
 }
 
 test_54() {
@@ -285,8 +285,8 @@ To prepare a test environment:
     download_phpunit                 Download PHPUnit 4-7
     download_gravity_forms           Download latest Gravity Forms
     download_gravityview             Download latest GravityView (use "-o clone" to clone the repo instead of download latest release)
-    download_test_suits              Download WordPress Develop 5.1 and latest version
-    configure_test_suits             Update WP test config files
+    download_test_suites             Download WordPress Develop 5.1 and latest version
+    configure_test_suites            Update WP test config files
 
     prepare_all                      Run all test preparation actions
 
@@ -308,8 +308,8 @@ To run unit tests:
 
 The following environment variables are used:
 
-    WP_51_TESTS_DIR                  WP 5.1 test suit location (default: ./wordpress-51-tests-lib)
-    WP_LATEST_TESTS_DIR              Latest WP test suit location (default: ./wordpress-latest-tests-lib)
+    WP_51_TESTS_DIR                  WP 5.1 test suite location (default: ./wordpress-51-tests-lib)
+    WP_LATEST_TESTS_DIR              Latest WP test suite location (default: ./wordpress-latest-tests-lib)
     PHPUNIT_DIR                      PHPUnit executables location (default: ./phpunit)
     GF_PLUGIN_DIR                    Gravity Forms location (default: ./gravityforms)
     PLUGIN_DIR                       Location of the plugin that's being tested (default: ./)
