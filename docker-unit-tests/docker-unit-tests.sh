@@ -4,7 +4,7 @@
 [ -f '.env' ] && source <(grep -v '^#' .env | sed -E 's|^(.+)=(.*)$|: ${\1=\2}; export \1|g')
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PLUGIN_DIR=${PLUGIN_DIR:-./}
+PLUGIN_DIR=${PLUGIN_DIR:-$PWD}
 GF_PLUGIN_DIR=${GF_PLUGIN_DIR:-./gravityforms}
 GV_PLUGIN_DIR=${GV_PLUGIN_DIR:-./gravityview}
 WP_51_TESTS_DIR=${WP_51_TESTS_DIR:-./wordpress-51-tests-lib}
@@ -61,7 +61,9 @@ _run_docker_compose() {
     _abort "\"$PHPUNIT_CONFIG\" is not found"
   fi
 
-  ENV="$([[ -f '.env' ]] && grep -v '^#' .env | awk 'ORS=" -e "' | sed 's/-e $//')"
+  if [ -f '.env' ]; then
+    ENV="$(grep -v '^#' .env | awk 'ORS=" -e "' | sed 's/-e $//')"
+  fi
 
   (export \
      PLUGIN_DIR="$PLUGIN_DIR" \
@@ -69,7 +71,7 @@ _run_docker_compose() {
      PHPUNIT_DIR="$PHPUNIT_DIR" \
      WP_51_TESTS_DIR="$WP_51_TESTS_DIR" \
      WP_LATEST_TESTS_DIR="$WP_LATEST_TESTS_DIR" ;\
-   docker-compose -f $SCRIPT_DIR/docker-compose.yml run -e "$ENV" --rm "${@}" -c "$PHPUNIT_CONFIG" \
+   docker-compose -f $SCRIPT_DIR/docker-compose.yml run $([ ! -z "$ENV" ] && echo "-e $ENV") --rm "${@}" -c "$PHPUNIT_CONFIG" \
   ) || _abort "Docker exited with an error"
 }
 
