@@ -280,6 +280,10 @@ test_all() {
   test_74 $1
 }
 
+remove_php_images() {
+  docker rmi --force $(docker images -q 'gravityview/php' | uniq)
+}
+
 ######################### Runtime magic :)
 set -e
 
@@ -309,6 +313,9 @@ To run unit tests:
     test_all                         Run all tests
 
     (use -o to pass optional PHPUnit commands; e.g., test_72 -o "--filter GVFuture_Test::test_plugin_dir_and_url_and_relpath")
+
+Other commands:
+    remove_php_images                Remove existing PHP images
 
 The following environment variables are used:
 
