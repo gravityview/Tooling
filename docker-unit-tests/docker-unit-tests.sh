@@ -62,7 +62,9 @@ _run_docker_compose() {
   fi
 
   if [ -f '.env' ]; then
-    ENV="$(grep -v '^#' .env | awk 'ORS=" -e "' | sed 's/-e $//')"
+    # Get environment variable names and join them with "-e" (e.g., "-e FOO -e BAR")
+    # If no values are passed, docker-compose takes them from the process environment that already contains values imported from .env at the beginning of the script
+    ENV=$(cat .env | cut -d "=" -f1 | sed 's/^/-e /' | paste -s -d" " -)
   fi
 
   (export \
@@ -70,8 +72,8 @@ _run_docker_compose() {
      GF_PLUGIN_DIR="$GF_PLUGIN_DIR" \
      PHPUNIT_DIR="$PHPUNIT_DIR" \
      WP_51_TESTS_DIR="$WP_51_TESTS_DIR" \
-     WP_LATEST_TESTS_DIR="$WP_LATEST_TESTS_DIR" ;\
-   docker-compose -f $SCRIPT_DIR/docker-compose.yml run $([ ! -z "$ENV" ] && echo "-e $ENV") --rm "${@}" -c "$PHPUNIT_CONFIG" \
+     WP_LATEST_TESTS_DIR="$WP_LATEST_TESTS_DIR" ; \
+  docker-compose -f "$SCRIPT_DIR/docker-compose.yml" run $ENV --rm "${@}" -c \"$PHPUNIT_CONFIG\" \
   ) || _abort "Docker exited with an error"
 }
 
@@ -236,46 +238,46 @@ prepare_all() {
 }
 
 test_54() {
-  _run_docker_compose php5.4 "$PHPUNIT_DIR/phpunit4" --no-coverage $1
+  _run_docker_compose php5.4 \"$PHPUNIT_DIR/phpunit4\" --no-coverage $1
 }
 
 test_55() {
-  _run_docker_compose php5.5 "$PHPUNIT_DIR/phpunit4" --no-coverage $1
+  _run_docker_compose php5.5 \"$PHPUNIT_DIR/phpunit4\" --no-coverage $1
 }
 
 test_56() {
-  _run_docker_compose php5.6 "$PHPUNIT_DIR/phpunit5" --no-coverage $1
+  _run_docker_compose php5.6 \"$PHPUNIT_DIR/phpunit5\" --no-coverage $1
 }
 
 test_70() {
-  _run_docker_compose php7.0 "$PHPUNIT_DIR/phpunit6" --no-coverage $1
+  _run_docker_compose php7.0 \"$PHPUNIT_DIR/phpunit6\" --no-coverage $1
 }
 
 test_71() {
-  _run_docker_compose php7.1 "$PHPUNIT_DIR/phpunit7" --no-coverage $1
+  _run_docker_compose php7.1 \"$PHPUNIT_DIR/phpunit7\" --no-coverage $1
 }
 
 test_72() {
-  _run_docker_compose php7.2 "$PHPUNIT_DIR/phpunit7" --no-coverage $1
+  _run_docker_compose php7.2 \"$PHPUNIT_DIR/phpunit7\" --no-coverage $1
 }
 
 test_73() {
-  _run_docker_compose php7.3 "$PHPUNIT_DIR/phpunit7" --no-coverage $1
+  _run_docker_compose php7.3 \"$PHPUNIT_DIR/phpunit7\" --no-coverage $1
 }
 
 test_74() {
-  _run_docker_compose php7.4 "$PHPUNIT_DIR/phpunit7" --no-coverage $1
+  _run_docker_compose php7.4 \"$PHPUNIT_DIR/phpunit7\" --no-coverage $1
 }
 
 test_all() {
-  test_54 "$1"
-  test_55 "$1"
-  test_56 "$1"
-  test_70 "$1"
-  test_71 "$1"
-  test_72 "$1"
-  test_73 "$1"
-  test_74 "$1"
+  test_54 $1
+  test_55 $1
+  test_56 $1
+  test_70 $1
+  test_71 $1
+  test_72 $1
+  test_73 $1
+  test_74 $1
 }
 
 ######################### Runtime magic :)
