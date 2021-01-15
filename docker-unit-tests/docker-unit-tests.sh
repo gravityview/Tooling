@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-# read environment variables from .env file if it exists
-[ -f '.env' ] && source <(grep -v '^#' .env | sed -E 's|^(.+)=(.*)$|: ${\1=\2}; export \1|g')
-
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# read environment variables from .env file if it exists (bash script folder is checked first, then current folder)
+[ -f "$SCRIPT_DIR/.env" ] && ENV_FILE="$SCRIPT_DIR/.env"
+[ -f ".env" ] && ENV_FILE=".env"
+[ ! -z "$ENV_FILE" ] && source <(grep -v '^#' "$ENV_FILE" | sed -E 's|^(.+)=(.*)$|: ${\1=\2}; export \1|g')
+
 PLUGIN_DIR=${PLUGIN_DIR:-$PWD}
 GF_PLUGIN_DIR=${GF_PLUGIN_DIR:-./gravityforms}
 GV_PLUGIN_DIR=${GV_PLUGIN_DIR:-./gravityview}
@@ -61,10 +64,10 @@ _run_docker_compose() {
     _abort "\"$PHPUNIT_CONFIG\" is not found"
   fi
 
-  if [ -f '.env' ]; then
+  if [ ! -z "$ENV_FILE" ]; then
     # Get environment variable names and join them with "-e" (e.g., "-e FOO -e BAR")
     # If no values are passed, docker-compose takes them from the process environment that already contains values imported from .env at the beginning of the script
-    ENV=$(cat .env | cut -d "=" -f1 | sed 's/^/-e /' | paste -s -d" " -)
+    ENV=$(cat "$ENV_FILE" | cut -d "=" -f1 | sed 's/^/-e /' | paste -s -d" " -)
   fi
 
   (export \
