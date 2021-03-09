@@ -109,22 +109,19 @@ configure_test_suites() {
 }
 
 download_test_suites() {
-  WP_51_HASH=$(wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags | jq 'map( select( .name | startswith( "5.1" ) ) ) | first | .commit.sha' | tr -d '"')
+  WP_51_HASH=387d40b94b25eda270aae8a8bdc7c42a839c2216
   WP_LATEST_HASH=$(wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags | jq '.[0].commit.sha' | tr -d '"')
 
   if [ -f "$WP_51_TESTS_DIR/.cache_hash" ] && [ "$WP_51_HASH" == "$(head -n 1 "$WP_51_TESTS_DIR/.cache_hash" )" ] && [ "$FORCE_DOWNLOAD" != true ]; then
-    echo "WP 5.1 test suite has not changed; skipping..."
+    echo "WP 5.1.7 test suite has not changed; skipping..."
   else
     [ -d "$WP_51_TESTS_DIR" ] && rm -rf "$WP_51_TESTS_DIR"
 
     mkdir -p "$WP_51_TESTS_DIR"
 
-    echo "Downloading WP 5.1 test suite..."
+    echo "Downloading WP 5.1.7 test suite..."
 
-    wget --header="Authorization: token $GH_AUTH_TOKEN" -O - -q https://api.github.com/repos/WordPress/wordpress-develop/tags |\
-		  jq 'map( select( .name | startswith( "5.1" ) ) ) | first | .tarball_url' |\
-		  tr -d '"' |\
-		  xargs -n1 wget -O - -q |\
+    wget -qO- https://github.com/WordPress/wordpress-develop/archive/5.1.7.tar.gz |\
 		  tar --strip-components=1 -zx -C "$WP_51_TESTS_DIR"
 
 	  echo $WP_51_HASH > "$WP_51_TESTS_DIR/.cache_hash"
@@ -322,7 +319,7 @@ Other commands:
 
 The following environment variables are used:
 
-    WP_51_TESTS_DIR                  WP 5.1 test suite location (default: ./wordpress-51-tests-lib)
+    WP_51_TESTS_DIR                  WP 5.1.7 test suite location (default: ./wordpress-51-tests-lib)
     WP_LATEST_TESTS_DIR              Latest WP test suite location (default: ./wordpress-latest-tests-lib)
     PHPUNIT_DIR                      PHPUnit executables location (default: ./phpunit)
     GF_PLUGIN_DIR                    Gravity Forms location (default: ./gravityforms)
