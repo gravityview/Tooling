@@ -12,13 +12,14 @@
    PLUGIN_DIR=${PWD}
    ```
    
-   (`/path/to/storage_folder/` is where a copy of dependencies will be saved). 
+   `/path/to/storage_folder/` is where a copy of dependencies will be saved. If you are testing multiple GravityView extensions, you may wish to store the `.env` file in the same folder where the Bash script resides, in which case it will serve as the global configuration for all unit tests.
 
 2. Execute `/path/to/docker-unit-tests.sh prepare_all` to set up the test environment. 
 
    Alternatively, you can pass these environment variables directly to the Bash script by executing `GV_PLUGIN_DIR=... GF_PLUGIN_DIR=xxx ./path/to/docker-unit-tests.sh prepare_all`
 
 `GV_PLUGIN_DIR` is an optional environmental variable as it is only used with extensions that rely on GravityView's unit tests. For that reason, the `prepare_all` command does not download GravityView and you need to run the `download_gravityview` command separately or link to folder with the cloned GravityView repo.
+
 ### Running tests
 
 To run tests, execute `/path/to/docker-unit-tests.sh test_74` (replace `74` with the desired PHP version: `54`, `55`, `56`, `70`, `71`, `72` or `73`).
