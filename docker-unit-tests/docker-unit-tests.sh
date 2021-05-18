@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# taken from https://www.binaryphile.com/bash/2020/01/12/determining-the-location-of-your-script-in-bash.html
+SCRIPT_DIR=$(cd $(dirname $BASH_SOURCE); cd -P $(dirname $(readlink $BASH_SOURCE || echo .)); pwd)
 
 # read environment variables from .env file if it exists (bash script folder is checked first, then current folder)
 [ -f "$SCRIPT_DIR/.env" ] && ENV_FILE="$SCRIPT_DIR/.env"
