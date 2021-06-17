@@ -155,7 +155,7 @@ END
 
   BUILD_FILE="${args[0]}-$PLUGIN_VERSION$GH_COMMIT_HASH.zip"
 
-  git archive HEAD --format=zip --prefix=${args[0]}/ --output=$BUILD_FILE
+  LATEST_CHANGES=`git stash create`; git archive --format=zip --prefix=${args[0]}/ --output=$BUILD_FILE ${LATEST_CHANGES:-HEAD}
 
   ! [ -s ${args[1]} ] && _abort "ERROR: $BUILD_FILE is empty"
 
